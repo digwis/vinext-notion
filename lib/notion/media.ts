@@ -72,6 +72,27 @@ export function isNotionHostedFile(input: unknown): boolean {
   return normalizeNotionFileSource(input)?.type === "file";
 }
 
+/** 判断这个 URL 是否能直接用 fetch 拿到（无需走 Notion API bearer） */
+export function isPublicImageUrlAllowed(src: string): boolean {
+  const url = parseImageUrl(src);
+  if (!url) return false;
+  if (url.pathname.startsWith("/api/notion/media/")) return true;
+  return [
+    "www.notion.so",
+    "notion.so",
+    "secure.notion-static.com",
+    "prod-files-secure.s3.us-west-2.amazonaws.com",
+  ].includes(url.hostname);
+}
+
+function parseImageUrl(src: string) {
+  try {
+    return new URL(src, "https://vinext-notion.example");
+  } catch {
+    return null;
+  }
+}
+
 export function pickFirstFilesPropertyValue(property: unknown): unknown | null {
   const value = property as { type?: string; files?: unknown[] } | null | undefined;
   if (!value || value.type !== "files" || !Array.isArray(value.files)) {
